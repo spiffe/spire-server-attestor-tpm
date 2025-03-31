@@ -129,6 +129,11 @@ duration:  10m
 # issuer: xxxx
 ```
 
+Then, in your spire agent.conf, in the agent section:
+```
+trust_bundle_url = "unix:///var/run/spire/server-attestor-tpm/verifier.sock?instance=main"
+```
+
 ### verifier
 
 Example verifier.conf for single spire server
@@ -162,3 +167,12 @@ keyset:
     - a.pem
 ```
 
+Then, in your spire agent.conf for side a, in the agent section:
+```
+trust_bundle_url = "unix:///var/run/spire/server-attestor-tpm/verifier.sock?instance=a"
+```
+
+And in your spire agent.conf for side b, in the agent section:
+```
+trust_bundle_url = "unix:///var/run/spire/server-attestor-tpm/verifier.sock?instance=b"
+```
