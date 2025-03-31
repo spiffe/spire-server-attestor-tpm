@@ -1,0 +1,142 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    main: ./cmd/spire-server-attestor-tpm-sign
+    binary: spire-server-attestor-tpm-sign
+    id: spire-server-attestor-tpm-sign
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    main: ./cmd/spire-server-attestor-tpm-signer-http
+    binary: spire-server-attestor-tpm-signer-http
+    id: spire-server-attestor-tpm-signer-http
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    main: ./cmd/spire-server-attestor-tpm-signer-unix
+    binary: spire-server-attestor-tpm-signer-unix
+    id: spire-server-attestor-tpm-signer-unix
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    main: ./cmd/spire-server-attestor-tpm-verifier
+    binary: spire-server-attestor-tpm-verifier
+    id: spire-server-attestor-tpm-verifier
+
+archives:
+  - format: tar.gz
+    builds:
+      - spire-server-attestor-tpm-sign
+    id: spire-server-attestor-tpm-sign
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      spire-server-attestor-tpm-sign_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - README.md
+      - LICENSE
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+  - format: tar.gz
+    builds:
+      - spire-server-attestor-tpm-signer-http
+    id: spire-server-attestor-tpm-signer-http
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      spire-server-attestor-tpm-signer-http_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - systemd/spire-server-attestor-tpm-signer-http.service
+      - conf/signer-http.conf
+      - README.md
+      - LICENSE
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+  - format: tar.gz
+    builds:
+      - spire-server-attestor-tpm-signer-unix
+    id: spire-server-attestor-tpm-signer-unix
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      spire-server-attestor-tpm-signer-unix_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - systemd/spire-server-attestor-tpm-signer-unix.service
+      - conf/signer-unix.conf
+      - README.md
+      - LICENSE
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+  - format: tar.gz
+    builds:
+      - spire-server-attestor-tpm-verifier
+    id: spire-server-attestor-tpm-verifier
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      spire-server-attestor-tpm-verifier_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - systemd/spire-server-attestor-tpm-verifier.service
+      - conf/verifier.conf
+      - README.md
+      - LICENSE
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+kos:
+  - repositories:
+      - ghcr.io/spiffe/spire-server-attestor-tpm-verifier
+    tags:
+      - "{{.Version}}"
+      - latest
+    bare: true
+    preserve_import_paths: false
+    platforms:
+      - linux/amd64
+      - linux/arm64
