@@ -1,0 +1,15 @@
+[Unit]
+Description=SPIRE ServerAttestor TPM Signer UNIX
+After=network-online.target local-fs.target time-sync.target
+Wants=network-online.target local-fs.target time-sync.target 
+StartLimitIntervalSec=0
+
+[Service]
+Restart=always
+RestartSec=5s
+ExecStart=spire-server-attestor-tpm-signer-unix /etc/spire/server-attestor-tpm/signer-unix.conf 
+ExecStartPre=rm -f /var/run/spire/server-attestor-tpm/signer-unix.sock
+
+[Install]
+WantedBy=multi-user.target
+
