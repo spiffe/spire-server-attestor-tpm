@@ -75,7 +75,7 @@ func (p *Plugin) PublishBundle(ctx context.Context, req *bundlepublisherv1.Publi
 		return &bundlepublisherv1.PublishBundleResponse{}, nil
 	}
 
-	bundleFormat, _ := bundleformat.FromString("spiffe")
+	bundleFormat, _ := bundleformat.FromString("pem")
 
         formatter := bundleformat.NewFormatter(req.Bundle)
         bundleBytes, err := formatter.Format(bundleFormat)

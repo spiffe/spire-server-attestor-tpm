@@ -145,7 +145,8 @@ keyset:
 
 Then, in your spire agent.conf, in the agent section:
 ```
-trust_bundle_url = "unix:///var/run/spire/server-attestor-tpm/verifier.sock?instance=main"
+trust_bundle_url = "http://localhost/trustbundle?instance=main"
+trust_bundle_unix_socket = "/var/run/spire/server-attestor-tpm/verifier.sock"
 ```
 
 
@@ -170,7 +171,8 @@ keyset:
 
 Then, in your spire agent.conf for side a, in the agent section:
 ```
-trust_bundle_url = "unix:///var/run/spire/server-attestor-tpm/verifier.sock?instance=a"
+trust_bundle_url = "http://localhost/trustbundle?instance=a"
+trust_bundle_unix_socket = "/var/run/spire/server-attestor-tpm/verifier.sock"
 ```
 
 And in your spire agent.conf for side b, in the agent section:
