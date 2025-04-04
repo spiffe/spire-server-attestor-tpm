@@ -16,10 +16,14 @@ This code is very early in development and is very experimental. Please do not u
 
 ## Components
 
+* spire-server-attestor-tpm-sign - spire-server plugin
 * spire-server-attestor-tpm-signer-unix - service
-* spire-server-attestor-tpm-signer-http - service
-* spire-server-attestor-tpm-sign - plugin
-* spire-server-attestor-tpm-verifier - service
+* spire-server-attestor-tpm-signer-http - service (optional)
+* spire-server-attestor-tpm-verifier - spire-agent service
+
+### spire-server-attestor-tpm-sign
+
+SPIRE Server Bundle Publisher plugin. Recieves a bundle from the SPIRE Server. Signs it locally using the spire-server-attestor-tpm-signer-unix service, and optionally through a list of remote spire-server-attestor-tpm-signer-http services. Stores the signed trust bundle in a configurable location for serving out to agents via http server (nginx, apache, etc). Even if the trust bundle hasn't updated, it will still push out new versions as their signatures get close to expiry.
 
 ### spire-server-attestor-tpm-signer-unix
 
@@ -29,11 +33,7 @@ This allows other services to request trust bundles be signed by the TPM. Protec
 
 ### spire-server-attestor-tpm-signer-http
 
-Listens on the network for trust bundle signing requests. Runs as non root. Accepts a trust bundle that must be already signed by an approved key. Forwards the request to the spire-server-attestor-tpm-signer-unix socket. An ip based filter can also be applied to block traffic so the service doesn't spend extra time decoding/key checking.
-
-### spire-server-attestor-tpm-sign
-
-SPIRE Server Bundle Publisher plugin. Recieves a bundle from the SPIRE Server. Signs it locally using the spire-server-attestor-tpm-signer-unix, and optionally through a list of remote spire-server-attestor-tpm-signer-http services. Stores the signed trust bundle in a configurable location for serving out to agents via http server (nginx, apache, etc). Even if the trust bundle hasn't updated, it will still push out new versions as their signatures get close to expiry.
+Listens on the network for trust bundle signing requests. Runs as non root. Accepts a trust bundle that must be already signed by an approved key. Forwards the request to the spire-server-attestor-tpm-signer-unix socket. An ip based filter can also be applied to block traffic so the service doesn't spend extra time decoding/key checking. Adds an additional signature for more trust.
 
 ### spire-server-attestor-tpm-verifier
 
@@ -92,6 +92,18 @@ Example server.conf snippet:
     }
 ```
 
+### signer-unix
+
+Example signer-unix.conf
+```
+socket: /var/run/spire/server-attestor-tpm/signer-unix.sock
+tpm-address: 0x81008006
+duration:  10m
+
+# Issuer can be set. Defaults to the hostname of the machine its running on.
+# issuer: xxxx
+```
+
 ### signer-http
 
 Example signer-http.conf:
@@ -117,21 +129,11 @@ allowed-addrs:
 - 1.2.3.4
 ```
 
-### signer-unix
+### Verifier
 
-Example signer-unix.conf
-```
-socket: /var/run/spire/server-attestor-tpm/signer-unix.sock
-tpm-address: 0x81008006
-duration:  10m
+#### Standalone SPIRE Server
 
-# Issuer can be set. Defaults to the hostname of the machine its running on.
-# issuer: xxxx
-```
-
-### verifier
-
-Example verifier.conf for single spire server
+Example verifier.conf
 ```
 keydir: keys
 socket: /var/run/spire/server-attestor-tpm/verifier.sock
@@ -149,8 +151,9 @@ trust_bundle_url = "http://localhost/trustbundle?instance=main"
 trust_bundle_unix_socket = "/var/run/spire/server-attestor-tpm/verifier.sock"
 ```
 
+#### SPIRE-HA-Agent setup
 
-Example verifier.conf for spire-ha-agent setup
+Example verifier.conf
 ```
 keydir: keys
 socket: /var/run/spire/server-attestor-tpm/verifier.sock
@@ -178,4 +181,5 @@ trust_bundle_unix_socket = "/var/run/spire/server-attestor-tpm/verifier.sock"
 And in your spire agent.conf for side b, in the agent section:
 ```
 trust_bundle_url = "unix:///var/run/spire/server-attestor-tpm/verifier.sock?instance=b"
+trust_bundle_unix_socket = "/var/run/spire/server-attestor-tpm/verifier.sock"
 ```
