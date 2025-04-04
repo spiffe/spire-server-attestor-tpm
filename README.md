@@ -20,7 +20,7 @@ When bootstrapping a SPIRE Agent to a SPIRE Server, proof that the Server is the
 
 This component implements this interface utilizing TPMs to attest the validity of the SPIRE Server to the SPIRE Agents. This enables fully hands off trust (re)establishment without 3rd parties. That is very important in setups where SPIRE is your bottom turtle of trust.
 
-## Minimal Architectural diagram
+## Minimal Architectural Diagram
 
 There are multiple ways of setting this up. The simplest is diagrammed here:
 ![diagram](diagram.png)
