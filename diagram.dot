@@ -1,0 +1,66 @@
+digraph G {
+
+  subgraph cluster_server1 {
+      label = "node name: n1"
+        style="filled,solid,bold";
+        color="#b3b3b3";
+        fillcolor="#f5f5f5";
+        labeljust="l"; 
+      subgraph cluster_node1_systemd {
+          #label = "Systemd"
+          label = "systemd managed"
+          style = "dashed,filled"
+          color="#939393";
+          fillcolor="#d5d5d5";
+
+    spire_server_1[label=<<table border="0"><tr><td><b>SPIRE Server</b></td></tr><tr><td align="left"><font point-size="9">NodeAttestors: tpm</font></td></tr><tr><td align="left"><font point-size="9">BundlePublisher: spire-server-attestor-tpm-sign</font></td></tr><tr><td align="left"><font point-size="9">systemd: spire-server@main</font></td></tr></table>>,shape="record",style="rounded,solid,filled,bold",color="#6c8ebf",fillcolor="#dae8fc"]
+          spire_agent_a[label=<<table border="0"><tr><td><b>SPIRE Server Attestor TPM Sign</b></td></tr></table>>,shape="record",style="rounded,solid,filled,bold",color="#82b366",fillcolor="#d5e8d4"]
+          spire_trust_bundle_signer_a[label=<<table border="0"><tr><td><b>SPIRE Server Attestor TPM Signer-Unix</b></td></tr><tr><td align="left"><font point-size="9">systemd: spire-server-attestor-tpm-signer-unix</font></td></tr></table>>,shape="record",style="rounded,solid,filled,bold",color="#82b366",fillcolor="#d5e8d4"]
+          spire_server_tb_a_signa_signb[label="Signed Trust Bundle", shape=note,style="rounded,filled,bold",fillcolor="#ffffff"]
+          spire_server_tpm_a[label="TPM", shape=component,style="rounded,filled,bold",color="#ff0000", fillcolor="#ffa8a8"]
+          webserver[label=<<table border="0"><tr><td><b>Webserver</b></td></tr><tr><td align="left"><font point-size="9">protocol: http</font></td></tr><tr><td align="left"><font point-size="9">systemd: nginx or apache or other</font></td></tr></table>>,shape="record",style="rounded,solid,filled,bold",color="#6c8ebf",fillcolor="#dae8fc"]
+
+      }
+  }
+
+  subgraph cluster_node3 {
+      label = "node name: n2"
+      #style = dashed
+        style="filled,solid,bold";
+        color="#b3b3b3";
+        fillcolor="#f5f5f5";
+        labeljust="l"; 
+
+      subgraph cluster_node3_systemd {
+          #label = "Systemd"
+          label = "systemd managed"
+          style = "dashed,filled"
+          color="#939393";
+          fillcolor="#d5d5d5";
+
+       labeljust="l"; 
+
+          server_attestor1[label=<<table border="0"><tr><td><b>Server Attestor TPM Verifier</b></td></tr><tr><td align="left"><font point-size="9">systemd: spire-server-attestor-tpm-verifier</font></td></tr></table>>,shape="record",style="rounded,solid,filled,bold",color="#82b366",fillcolor="#d5e8d4"]
+
+          spire_agent1[label=<<table border="0"><tr><td><b>SPIRE Agent</b></td></tr><tr><td align="left"><font point-size="9">NodeAttestor: tpm</font></td></tr><tr><td align="left"><font point-size="9">WorkloadAttestor: systemd</font></td></tr><tr><td align="left"><font point-size="9">systemd: spire-agent@main</font></td></tr></table>>,shape="record",style="rounded,solid,filled,bold",color="#82b366",fillcolor="#d5e8d4"]
+          sshd1[label="sshd",shape="box",style="rounded,solid,filled,bold",color="#d6b656",fillcolor="#fff2cc"]
+          kubelet1[label="kubelet",shape="box",style="rounded,solid,filled,bold",color="#d6b656",fillcolor="#fff2cc"]
+          dotdotdot1[label="...",shape="box",style="rounded,solid,filled,bold",color="#d6b656",fillcolor="#fff2cc"]
+          tpm_a_pub[label="TPM Pubkey",shape=note,style="rounded,filled,bold",fillcolor="#ffffff"]
+      }
+  }
+ 
+ 
+  spire_server_1 -> spire_agent1[dir=back]
+  spire_server_1 -> spire_agent_a
+  spire_agent_a -> spire_trust_bundle_signer_a
+  spire_trust_bundle_signer_a -> spire_server_tpm_a
+  webserver -> spire_server_tb_a_signa_signb
+  webserver -> server_attestor1[dir=back]
+  server_attestor1 -> spire_agent1[dir=back]
+  server_attestor1 -> tpm_a_pub[dir=back]
+  spire_agent_a -> spire_server_tb_a_signa_signb
+  spire_agent1 -> sshd1[dir=back]
+  spire_agent1 -> kubelet1[dir=back]
+  spire_agent1 -> dotdotdot1[dir=back]
+}

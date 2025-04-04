@@ -4,7 +4,7 @@
 [![Apache 2.0 License](https://img.shields.io/github/license/spiffe/helm-charts)](https://opensource.org/licenses/Apache-2.0)
 [![Development Phase](https://github.com/spiffe/spiffe/blob/main/.img/maturity/dev.svg)](https://github.com/spiffe/spiffe/blob/main/MATURITY.md#development)
 
-This project enables SPIRE Agents to automatically attest the SPIRE server(s) via a trusted set of TPMS.
+This project enables SPIRE Agents to automatically attest the SPIRE server(s) via a trusted set of [TPMs](https://en.wikipedia.org/wiki/Trusted_Platform_Module).
 
 This enables a large number of Workload nodes to easily establish trust during initial setup, or reestablish trust if they are powered down too long or if the server is broken too long without needing to touch the nodes.
 
@@ -13,6 +13,17 @@ It can also be used along with the spire-ha-agent to build an even higher level 
 ## Warning
 
 This code is very early in development and is very experimental. Please do not use it in production yet. Please do consider testing it out, provide feedback, and maybe provide fixes.
+
+## Server Attestation
+
+When bootstrapping a SPIRE Agent to a SPIRE Server, proof that the Server is the correct one to trust must be established. Also, when trust is lost and must be reestablished, this procedure must be performed again. Server Attestation extends the built in support in SPIRE to allow fully automated bootstrapping/rebootstrapping in a plugable way.
+
+This component implements this interface utilizing TPMs to attest the validity of the SPIRE Server to the SPIRE Agents. This enables fully hands off trust (re)establishment without 3rd parties. That is very important in setups where SPIRE is your bottom turtle of trust.
+
+## Minimal Architectural diagram
+
+There are multiple ways of setting this up. The simplest is diagrammed here:
+![diagram](diagram.png)
 
 ## Components
 
