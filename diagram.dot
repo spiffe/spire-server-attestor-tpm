@@ -50,16 +50,16 @@ digraph G {
       }
   }
  
- 
   spire_server_1 -> spire_agent1[dir=back]
   spire_server_1 -> spire_agent_a
   spire_agent_a -> spire_trust_bundle_signer_a
+  spire_trust_bundle_signer_a -> spire_agent_a[constrint=false,dir=back]
   spire_trust_bundle_signer_a -> spire_server_tpm_a
   webserver -> spire_server_tb_a_signa_signb
   webserver -> server_attestor1[dir=back]
   server_attestor1 -> spire_agent1[dir=back]
   server_attestor1 -> tpm_a_pub[dir=back]
-  spire_agent_a -> spire_server_tb_a_signa_signb
+  spire_trust_bundle_signer_a -> spire_server_tb_a_signa_signb
   spire_agent1 -> sshd1[dir=back]
   spire_agent1 -> kubelet1[dir=back]
   spire_agent1 -> dotdotdot1[dir=back]
