@@ -7,6 +7,7 @@ StartLimitIntervalSec=0
 [Service]
 Restart=always
 RestartSec=5s
+EnvironmentFile=-/etc/spiffe/default-trust-domain.env
 ExecStart=spire-server-attestor-tpm-signer-unix /etc/spire/server-attestor-tpm/signer-unix.conf 
 ExecStartPre=rm -f /var/run/spire/server-attestor-tpm/signer-unix.sock
 ExecStartPre=mkdir -p /var/run/spire/server-attestor-tpm

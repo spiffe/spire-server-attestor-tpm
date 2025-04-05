@@ -7,6 +7,7 @@ StartLimitIntervalSec=0
 [Service]
 Restart=always
 RestartSec=5s
+EnvironmentFile=-/etc/spiffe/default-trust-domain.env
 ExecStart=spire-server-attestor-tpm-verifier /etc/spire/server-attestor-tpm/verifier.conf -l
 ExecStartPre=rm -f /var/run/spire/server-attestor-tpm/verifier.sock
 ExecStartPre=mkdir -p /var/run/spire/server-attestor-tpm
