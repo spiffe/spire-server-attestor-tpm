@@ -92,12 +92,9 @@ Example server.conf snippet:
         plugin_cmd = "/usr/bin/spire-server-attestor-tpm-sign"
         plugin_data {
             urls = ["http://1.2.3.4:8181/sign"]
-            dir = "/usr/share/nginx/html"
 
             # Defaults
             # socket = "/var/run/spire/server-attestor-tpm/signer-unix.sock"
-            # filename = "spiffetrustbundle.token"
-            # tmpfile = "spiffetrustbundle.token.tmp"
             # frequency = "5m"
         }
     }
@@ -110,6 +107,10 @@ Example signer-unix.conf
 socket: /var/run/spire/server-attestor-tpm/signer-unix.sock
 tpm-address: 0x81008006
 duration:  10m
+dir: /usr/share/nginx/html
+
+# filename: "spiffetrustbundle.token"
+# tmpfile: "spiffetrustbundle.token.tmp"
 
 # Issuer can be set. Defaults to the hostname of the machine its running on.
 # issuer: xxxx

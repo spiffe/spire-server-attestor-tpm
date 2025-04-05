@@ -6,16 +6,17 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strings"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
-	"gopkg.in/yaml.v3"
 	"github.com/golang-jwt/jwt/v5"
-	tpmjwt "github.com/salrashid123/golang-jwt-tpm"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpm2/transport"
 	"github.com/google/go-tpm/tpmutil"
+	tpmjwt "github.com/salrashid123/golang-jwt-tpm"
+	"gopkg.in/yaml.v3"
 )
 
 var config Config
@@ -23,7 +24,7 @@ var tpmconfig *tpmjwt.TPMConfig
 var issuer string
 var duration time.Duration
 
-//FIXME share this somehow
+// FIXME share this somehow
 type SPIFFETrustBundleClaims struct {
 	SPIFFETrustBundle string `json:"spiffetb"`
 	jwt.RegisteredClaims
@@ -33,12 +34,14 @@ type SPIFFENestedTrustBundleClaims struct {
 	jwt.RegisteredClaims
 }
 
-
 type Config struct {
-	Socket string `yaml:"socket"`
-	TPMAddr string `yaml:"tpm-address"`
+	Socket   string `yaml:"socket"`
+	TPMAddr  string `yaml:"tpm-address"`
 	Duration string `yaml:"duration"`
-	Issuer string `yaml:"issuer,omitempty`
+	Dir      string `hcl:"dir"`
+	Filename string `hcl:"filename,omitempty"`
+	TMPFile  string `hcl:"tmpfile,omitempty"`
+	Issuer   string `yaml:"issuer,omitempty`
 }
 
 func signHandler(w http.ResponseWriter, r *http.Request) {
@@ -100,6 +103,42 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(tokenString))
 }
 
+func publishHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	err = os.WriteFile(filepath.Join(config.Dir, config.TMPFile), []byte(body), 0644)
+	if err != nil {
+		fmt.Printf("Error writing bundle: %v\n", err)
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+	err = os.Chmod(filepath.Join(config.Dir, config.TMPFile), 0644)
+	if err != nil {
+		fmt.Printf("Error chowning bundle: %v\n", err)
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+	err = os.Rename(filepath.Join(config.Dir, config.TMPFile), filepath.Join(config.Dir, config.Filename))
+	if err != nil {
+		fmt.Printf("Error renaming bundle: %v\n", err)
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(""))
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "usage:", os.Args[0], "/path/to/config.conf")
@@ -110,7 +149,7 @@ func main() {
 		fmt.Println("Error reading config file", err)
 		return
 	}
-        configData = os.ExpandEnv(configData)
+	configData = []byte(os.ExpandEnv(string(configData)))
 	err = yaml.Unmarshal([]byte(configData), &config)
 	if err != nil {
 		fmt.Println("error:", err)
@@ -133,6 +172,17 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error %v\n", err)
 		return
+	}
+
+	if config.Dir == "" {
+		fmt.Printf("Error: you must configure dir in which to write the token")
+		return
+	}
+	if config.Filename == "" {
+		config.Filename = "spiffetrustbundle.token"
+	}
+	if config.TMPFile == "" {
+		config.TMPFile = "spiffetrustbundle.token.tmp"
 	}
 
 	duration, err = time.ParseDuration(config.Duration)
@@ -168,6 +218,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/sign", signHandler)
+	mux.HandleFunc("/publish", publishHandler)
 
 	s := http.Server{
 		Handler: mux,

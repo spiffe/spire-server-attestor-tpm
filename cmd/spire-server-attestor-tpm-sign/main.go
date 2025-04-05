@@ -8,16 +8,15 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/hcl"
-	"github.com/spiffe/spire-plugin-sdk/pluginsdk/support/bundleformat"
 	"github.com/spiffe/spire-plugin-sdk/pluginmain"
 	"github.com/spiffe/spire-plugin-sdk/pluginsdk"
+	"github.com/spiffe/spire-plugin-sdk/pluginsdk/support/bundleformat"
 	bundlepublisherv1 "github.com/spiffe/spire-plugin-sdk/proto/spire/plugin/server/bundlepublisher/v1"
 	"github.com/spiffe/spire-plugin-sdk/proto/spire/plugin/types"
 	configv1 "github.com/spiffe/spire-plugin-sdk/proto/spire/service/common/config/v1"
@@ -31,22 +30,19 @@ var (
 )
 
 type Config struct {
-	Socket    string `hcl:"socket"`
+	Socket    string   `hcl:"socket"`
 	URLs      []string `hcl:"urls"`
-	Dir       string `hcl:"dir"`
-	Filename  string `hcl:"filename"`
-	TMPFile   string `hcl:"tmpfile"`
-	Frequency string `hcl:"frequency"`
+	Frequency string   `hcl:"frequency"`
 }
 
 type Plugin struct {
 	bundlepublisherv1.UnimplementedBundlePublisherServer
 	configv1.UnimplementedConfigServer
-	configMtx sync.RWMutex
-	config    *Config
-	bundle    *types.Bundle
-	bundleMtx sync.RWMutex
-	logger hclog.Logger
+	configMtx  sync.RWMutex
+	config     *Config
+	bundle     *types.Bundle
+	bundleMtx  sync.RWMutex
+	logger     hclog.Logger
 	lastUpdate time.Time
 }
 
@@ -60,13 +56,13 @@ func (p *Plugin) PublishBundle(ctx context.Context, req *bundlepublisherv1.Publi
 		return nil, err
 	}
 
-        if req.Bundle == nil {
+	if req.Bundle == nil {
 		return nil, status.Error(codes.InvalidArgument, "missing bundle in request")
 	}
 
-	frequency , err := time.ParseDuration(config.Frequency)
+	frequency, err := time.ParseDuration(config.Frequency)
 	if err != nil {
-                return nil, status.Errorf(codes.Internal, "failed to parse frequency")
+		return nil, status.Errorf(codes.Internal, "failed to parse frequency")
 	}
 
 	currentBundle := p.getBundle()
@@ -77,34 +73,28 @@ func (p *Plugin) PublishBundle(ctx context.Context, req *bundlepublisherv1.Publi
 
 	bundleFormat, _ := bundleformat.FromString("pem")
 
-        formatter := bundleformat.NewFormatter(req.Bundle)
-        bundleBytes, err := formatter.Format(bundleFormat)
-        if err != nil {
-                return nil, status.Errorf(codes.Internal, "could not format bundle: %v", err.Error())
-        }
+	formatter := bundleformat.NewFormatter(req.Bundle)
+	bundleBytes, err := formatter.Format(bundleFormat)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not format bundle: %v", err.Error())
+	}
 
 	p.logger.Debug(fmt.Sprintf("Got bundle in plugin: %s", config))
 	token, err := signTrustBundle(config.Socket, config.URLs, strings.NewReader(string(bundleBytes)))
 	if err != nil {
-                return nil, status.Errorf(codes.Internal, "could not sign bundle: %v", err.Error())
+		return nil, status.Errorf(codes.Internal, "could not sign bundle: %v", err.Error())
 	}
 	p.logger.Debug("Got bundle in plugin %s", token)
-	err = os.WriteFile(filepath.Join(config.Dir, config.TMPFile), []byte(token), 0644)
+
+	err = publishTrustBundle(config.Socket, token)
 	if err != nil {
-                return nil, status.Errorf(codes.Internal, "could not write out bundle: %v", err.Error())
+		return nil, status.Errorf(codes.Internal, "could not publish bundle: %v", err.Error())
 	}
-	err = os.Chmod(filepath.Join(config.Dir, config.TMPFile), 0644)
-	if err != nil {
-                return nil, status.Errorf(codes.Internal, "could chown bundle: %v", err.Error())
-	}
-	err = os.Rename(filepath.Join(config.Dir, config.TMPFile), filepath.Join(config.Dir, config.Filename))
-	if err != nil {
-                return nil, status.Errorf(codes.Internal, "could not write out bundle: %v", err.Error())
-	}
+
 	p.setBundle(req.Bundle)
 	p.lastUpdate = time.Now()
 
-	p.logger.Debug(fmt.Sprintf("Next update due to timeout sometime after %s", p.lastUpdate.Add(frequency).Add(30 * time.Second)))
+	p.logger.Debug(fmt.Sprintf("Next update due to timeout sometime after %s", p.lastUpdate.Add(frequency).Add(30*time.Second)))
 
 	return &bundlepublisherv1.PublishBundleResponse{}, nil
 }
@@ -117,15 +107,6 @@ func (p *Plugin) Configure(ctx context.Context, req *configv1.ConfigureRequest) 
 
 	if config.Socket == "" {
 		config.Socket = "/var/run/spire/server-attestor-tpm/signer-unix.sock"
-	}
-	if config.Dir == "" {
-		return nil, status.Errorf(codes.Internal, "you must configure dir in which to write the token")
-	}
-	if config.Filename == "" {
-		config.Filename = "spiffetrustbundle.token"
-	}
-	if config.TMPFile == "" {
-		config.TMPFile = "spiffetrustbundle.token.tmp"
 	}
 	if config.Frequency == "" {
 		config.Frequency = "5m"
@@ -165,7 +146,7 @@ func (p *Plugin) getConfig() (*Config, error) {
 	return p.config, nil
 }
 
-func signTrustBundle(socket string, addrs []string,  trustBundle io.Reader) (token string, err error){
+func signTrustBundle(socket string, addrs []string, trustBundle io.Reader) (token string, err error) {
 	c := http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
@@ -185,10 +166,10 @@ func signTrustBundle(socket string, addrs []string,  trustBundle io.Reader) (tok
 	if err != nil {
 		return "", err
 	}
-        sbody, err := io.ReadAll(uresp.Body)
-        if err != nil {
+	sbody, err := io.ReadAll(uresp.Body)
+	if err != nil {
 		return "", err
-        }
+	}
 	defer uresp.Body.Close()
 
 	for _, addr := range addrs {
@@ -213,6 +194,30 @@ func signTrustBundle(socket string, addrs []string,  trustBundle io.Reader) (tok
 	return string(sbody), nil
 }
 
+func publishTrustBundle(socket string, token string) (err error) {
+	c := http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", socket)
+			},
+		},
+	}
+
+	ctx := context.Background()
+
+	ureq, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://localhost/publish", bytes.NewBuffer([]byte(token)))
+	if err != nil {
+		return err
+	}
+
+	uresp, err := c.Do(ureq)
+	if err != nil {
+		return err
+	}
+	defer uresp.Body.Close()
+	return nil
+}
+
 func main() {
 	if os.Getenv("BundlePublisher") != "" {
 		plugin := new(Plugin)
@@ -231,6 +236,12 @@ func main() {
 	addrs := os.Args[2:]
 
 	token, err := signTrustBundle(socket, addrs, os.Stdin)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v", err)
+		os.Exit(1)
+	}
+
+	err = publishTrustBundle(socket, token)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v", err)
 		os.Exit(1)

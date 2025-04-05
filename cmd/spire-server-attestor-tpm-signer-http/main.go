@@ -9,20 +9,20 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
-	"path/filepath"
 
-	"gopkg.in/yaml.v3"
 	"github.com/golang-jwt/jwt/v5"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	ListenAddr string `yaml:"listen-addr"`
-	Socket string `yaml:"socket"`
-	KeyDir string `yaml:"keydir,omitempty"`
-	Backup string `yaml:"backup,omitempty"`
-	Primary string `yaml:"primary"`
+	ListenAddr   string   `yaml:"listen-addr"`
+	Socket       string   `yaml:"socket"`
+	KeyDir       string   `yaml:"keydir,omitempty"`
+	Backup       string   `yaml:"backup,omitempty"`
+	Primary      string   `yaml:"primary"`
 	AllowedAddrs []string `yaml:"allowed-addrs"`
 }
 
@@ -33,7 +33,7 @@ var allowedhosts map[string]struct{}
 var socket string
 
 type SPIFFETrustBundleOrNestedClaims struct {
-	SPIFFETrustBundle string `json:"spiffetb,omitempty"`
+	SPIFFETrustBundle       string `json:"spiffetb,omitempty"`
 	SPIFFENestedTrustBundle string `json:"jwt,omitempty"`
 	jwt.RegisteredClaims
 }
@@ -73,13 +73,13 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 
 	_, err = jwt.ParseWithClaims(string(body), &SPIFFETrustBundleOrNestedClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return primarykey, nil
-	}, jwt.WithLeeway(5 * time.Second))
+	}, jwt.WithLeeway(5*time.Second))
 	if err != nil {
 		ok := false
 		if err.Error() == "token signature is invalid: crypto/rsa: verification error" && backupkey != nil {
 			_, err = jwt.ParseWithClaims(string(body), &SPIFFETrustBundleOrNestedClaims{}, func(token *jwt.Token) (interface{}, error) {
 				return backupkey, nil
-			}, jwt.WithLeeway(5 * time.Second))
+			}, jwt.WithLeeway(5*time.Second))
 			if err == nil {
 				fmt.Printf("Backup key used!\n")
 				ok = true
@@ -102,7 +102,6 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-
 	ureq, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://localhost/sign", bytes.NewBuffer(body))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
@@ -118,12 +117,12 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-        sbody, err := io.ReadAll(uresp.Body)
-        if err != nil {
+	sbody, err := io.ReadAll(uresp.Body)
+	if err != nil {
 		fmt.Println("Error talking to socket:", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-                return
-        }
+		return
+	}
 	defer uresp.Body.Close()
 
 	w.WriteHeader(http.StatusOK)
@@ -141,7 +140,7 @@ func main() {
 		fmt.Println("Error reading config file", err)
 		return
 	}
-        configData = os.ExpandEnv(configData)
+	configData = []byte(os.ExpandEnv(string(configData)))
 	err = yaml.Unmarshal([]byte(configData), &config)
 	if err != nil {
 		fmt.Println("error:", err)

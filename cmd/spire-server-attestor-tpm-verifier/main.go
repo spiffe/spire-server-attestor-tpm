@@ -7,18 +7,18 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/url"
 	"net/http"
-	"slices"
-	"time"
+	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
+	"time"
 
-	"gopkg.in/yaml.v3"
 	"github.com/golang-jwt/jwt/v5"
+	"gopkg.in/yaml.v3"
 )
 
-//FIXME share this somehow
+// FIXME share this somehow
 type SPIFFETrustBundleClaims struct {
 	SPIFFETrustBundle string `json:"spiffetb"`
 	jwt.RegisteredClaims
@@ -28,16 +28,15 @@ type SPIFFENestedTrustBundleClaims struct {
 	jwt.RegisteredClaims
 }
 
-
 type KeysetConfig struct {
-	URL string `yaml:"url"`
-	Backup string `yaml:"backup,omitempty"`
-	Chain []string `yaml:"chain"`
+	URL    string   `yaml:"url"`
+	Backup string   `yaml:"backup,omitempty"`
+	Chain  []string `yaml:"chain"`
 }
 
 type Config struct {
-	Socket string `yaml:"socket,omitempty"`
-	KeyDir string `yaml:"keydir,omitempty"`
+	Socket string                  `yaml:"socket,omitempty"`
+	KeyDir string                  `yaml:"keydir,omitempty"`
 	Keyset map[string]KeysetConfig `yaml:"keyset"`
 }
 
@@ -51,7 +50,7 @@ func fetchToken(ctx context.Context, URL string) (token string, err error) {
 	}
 
 	if u.Scheme == "" || u.Scheme == "file" {
-	        token, err := os.ReadFile(u.Path)
+		token, err := os.ReadFile(u.Path)
 		if err != nil {
 			return "", err
 		}
@@ -84,16 +83,16 @@ func verifyTokenReturnTrustBundle(allKeys map[string]*rsa.PublicKey, ksc KeysetC
 	backupAvailable := (ksc.Backup != "")
 	l := len(ksc.Chain)
 	if l > 1 {
-		toProcess := ksc.Chain[0:l-1]
+		toProcess := ksc.Chain[0 : l-1]
 		for _, key := range toProcess {
 			ptoken, err = jwt.ParseWithClaims(token, &SPIFFENestedTrustBundleClaims{}, func(token *jwt.Token) (interface{}, error) {
 				return allKeys[key], nil
-			}, jwt.WithLeeway(5 * time.Second))
+			}, jwt.WithLeeway(5*time.Second))
 			if err != nil {
 				if err.Error() == "token signature is invalid: crypto/rsa: verification error" && backupAvailable {
 					ptoken, err = jwt.ParseWithClaims(token, &SPIFFENestedTrustBundleClaims{}, func(token *jwt.Token) (interface{}, error) {
 						return allKeys[ksc.Backup], nil
-					}, jwt.WithLeeway(5 * time.Second))
+					}, jwt.WithLeeway(5*time.Second))
 					if err == nil {
 						fmt.Printf("Backup key used!\n")
 						backupAvailable = false
@@ -105,7 +104,7 @@ func verifyTokenReturnTrustBundle(allKeys map[string]*rsa.PublicKey, ksc KeysetC
 					return "", err
 				}
 			}
-		        claims, ok := ptoken.Claims.(*SPIFFENestedTrustBundleClaims)
+			claims, ok := ptoken.Claims.(*SPIFFENestedTrustBundleClaims)
 			if !ok {
 				return "", errors.New("Failed to parse claims")
 			}
@@ -115,12 +114,12 @@ func verifyTokenReturnTrustBundle(allKeys map[string]*rsa.PublicKey, ksc KeysetC
 	last := ksc.Chain[l-1]
 	ptoken, err = jwt.ParseWithClaims(token, &SPIFFETrustBundleClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return allKeys[last], nil
-	}, jwt.WithLeeway(5 * time.Second))
+	}, jwt.WithLeeway(5*time.Second))
 	if err != nil {
 		if err.Error() == "token signature is invalid: crypto/rsa: verification error" && backupAvailable {
 			ptoken, err = jwt.ParseWithClaims(token, &SPIFFENestedTrustBundleClaims{}, func(token *jwt.Token) (interface{}, error) {
 				return allKeys[ksc.Backup], nil
-			}, jwt.WithLeeway(5 * time.Second))
+			}, jwt.WithLeeway(5*time.Second))
 			if err == nil {
 				fmt.Printf("Backup key used!\n")
 				backupAvailable = false
@@ -132,7 +131,7 @@ func verifyTokenReturnTrustBundle(allKeys map[string]*rsa.PublicKey, ksc KeysetC
 			return "", err
 		}
 	}
-        claims, ok := ptoken.Claims.(*SPIFFETrustBundleClaims)
+	claims, ok := ptoken.Claims.(*SPIFFETrustBundleClaims)
 	if !ok {
 		return "", errors.New("Failed to parse claims")
 	}
@@ -144,7 +143,7 @@ func trustBundleHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	instance := params.Get("instance")
 	if instance == "" {
-                http.Error(w, "Required param instance missing", http.StatusBadRequest)
+		http.Error(w, "Required param instance missing", http.StatusBadRequest)
 		return
 	}
 
@@ -177,7 +176,7 @@ func main() {
 		fmt.Println("Error reading config file", err)
 		return
 	}
-	configData = os.ExpandEnv(configData)
+	configData = []byte(os.ExpandEnv(string(configData)))
 	err = yaml.Unmarshal([]byte(configData), &config)
 	if err != nil {
 		fmt.Println("error:", err)
@@ -218,7 +217,7 @@ func main() {
 			fmt.Println("Error parsing url %v", err)
 			return
 		}
-		if u.Scheme != "" && u.Scheme != "file" && u.Scheme != "http"  && u.Scheme != "https" {
+		if u.Scheme != "" && u.Scheme != "file" && u.Scheme != "http" && u.Scheme != "https" {
 			fmt.Println("Unsupported url scheme %s", u.Scheme)
 			return
 		}
