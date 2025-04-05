@@ -177,6 +177,7 @@ func main() {
 		fmt.Println("Error reading config file", err)
 		return
 	}
+	configData = os.ExpandEnv(configData)
 	err = yaml.Unmarshal([]byte(configData), &config)
 	if err != nil {
 		fmt.Println("error:", err)
