@@ -8,6 +8,7 @@ StartLimitIntervalSec=0
 Restart=always
 RestartSec=5s
 EnvironmentFile=-/etc/spiffe/default-trust-domain.env
+EnvironmentFile=-/etc/spire/server-attestor-tpm/signer-http.env
 ExecStart=spire-server-attestor-tpm-signer-http /etc/spire/server-attestor-tpm/signer-http.conf 
 User=spire-server-attestor-tpm-signer-http
 Group=nobody

@@ -155,7 +155,23 @@ func main() {
 
 	allowedhosts = make(map[string]struct{})
 	for _, i := range config.AllowedAddrs {
-		allowedhosts[i] = struct{}{}
+		ip := net.ParseIP(i)
+		if ip != nil {
+			allowedhosts[i] = struct{}{}
+		} else {
+			ips, err := net.LookupIP(i)
+			if err != nil {
+				fmt.Printf("Failed to lookup address: %v\n", err)
+				return
+			}
+			for _, ip := range ips {
+				allowedhosts[ip.String()] = struct{}{}
+			}
+		}
+	}
+	fmt.Println("Allowed addrs:")
+	for ip, _ := range allowedhosts {
+		fmt.Printf("  %s\n", ip)
 	}
 
 	publickey, err := os.ReadFile(filepath.Join(keyDir, config.Primary))

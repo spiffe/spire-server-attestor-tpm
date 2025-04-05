@@ -143,7 +143,9 @@ listen-addr: ":8181"
 # Alowed ip addresses allowed to talk to the service. Used to prevent random nodes from causing too much cpu load verifying certs. Signed certs are still required for proper auth.
 allowed-addrs:
 - 127.0.0.1
-- 1.2.3.4
+- spire-server.${SPIFFE_TRUST_DOMAIN}
+# - spire-server-a.${SPIFFE_TRUST_DOMAIN}
+# - spire-server-b.${SPIFFE_TRUST_DOMAIN}
 ```
 
 ### Verifier
