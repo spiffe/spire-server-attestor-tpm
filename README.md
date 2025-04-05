@@ -34,13 +34,17 @@ There are multiple ways of setting this up. The simplest is diagrammed here:
 
 ### spire-server-attestor-tpm-sign
 
-SPIRE Server Bundle Publisher plugin. Recieves a bundle from the SPIRE Server. Signs it locally using the spire-server-attestor-tpm-signer-unix service, and optionally through a list of remote spire-server-attestor-tpm-signer-http services. Stores the signed trust bundle in a configurable location for serving out to agents via http server (nginx, apache, etc). Even if the trust bundle hasn't updated, it will still push out new versions as their signatures get close to expiry.
+SPIRE Server Bundle Publisher plugin. Recieves a bundle from the SPIRE Server. Signs it locally using the spire-server-attestor-tpm-signer-unix service, and optionally through a list of remote spire-server-attestor-tpm-signer-http services.  Even if the trust bundle hasn't updated, it will still push out new versions as their signatures get close to expiry.
 
 ### spire-server-attestor-tpm-signer-unix
 
 Runs as root, has access to the TPM, listens for signing requests on a unix socket.
 
-This allows other services to request trust bundles be signed by the TPM. Protect the unix socket.
+This allows other services to request trust bundles be signed by the TPM.
+
+Stores the signed trust bundle in a configurable location for serving out to agents via http server (nginx, apache, etc).
+
+Protect the unix socket.
 
 ### spire-server-attestor-tpm-signer-http
 
@@ -91,6 +95,7 @@ Example server.conf snippet:
     BundlePublisher "signer" {
         plugin_cmd = "/usr/bin/spire-server-attestor-tpm-sign"
         plugin_data {
+            # Additional URL's in which to use for signatures
             urls = ["http://1.2.3.4:8181/sign"]
 
             # Defaults
