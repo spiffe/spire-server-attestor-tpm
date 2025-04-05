@@ -9,6 +9,7 @@ Restart=always
 RestartSec=5s
 ExecStart=spire-server-attestor-tpm-signer-unix /etc/spire/server-attestor-tpm/signer-unix.conf 
 ExecStartPre=rm -f /var/run/spire/server-attestor-tpm/signer-unix.sock
+ExecStartPre=mkdir -p /var/run/spire/server-attestor-tpm
 
 [Install]
 WantedBy=multi-user.target
