@@ -200,6 +200,12 @@ trust_bundle_unix_socket = "/var/run/spire/server-attestor-tpm/verifier.sock"
 
 And in your spire agent.conf for side b, in the agent section:
 ```
-trust_bundle_url = "unix:///var/run/spire/server-attestor-tpm/verifier.sock?instance=b"
+trust_bundle_url = "http://localhost/trustbundle/?instance=b"
+trust_bundle_unix_socket = "/var/run/spire/server-attestor-tpm/verifier.sock"
+```
+
+If using the systemd units, you can instead use the following config for both sides:
+```
+trust_bundle_url = "http://localhost/trustbundle?instance=${INSTANCE}"
 trust_bundle_unix_socket = "/var/run/spire/server-attestor-tpm/verifier.sock"
 ```
