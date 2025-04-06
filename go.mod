@@ -3,7 +3,7 @@ module github.com/kfox1111/tpm-test
 go 1.23.2
 
 require (
-	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/go-tpm v0.9.3
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/hcl v1.0.0
