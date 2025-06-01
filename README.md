@@ -158,7 +158,7 @@ keydir: keys
 socket: /var/run/spire/server-attestor-tpm/verifier.sock
 keyset:
   main:
-    url: http://spire-server.${SPIFFE_TRUST_BUNDLE}/spiffetrustbundle.token
+    url: http://spire-server.${SPIFFE_TRUST_DOMAIN}/spiffetrustbundle.token
     backup: backup.pem
     chain:
     - primary.pem
@@ -178,14 +178,14 @@ keydir: keys
 socket: /var/run/spire/server-attestor-tpm/verifier.sock
 keyset:
   a:
-    url: http://spire-server-a.${SPIFFE_TRUST_BUNDLE}/spiffetrustbundle.token
+    url: http://spire-server-a.${SPIFFE_TRUST_DOMAIN}/spiffetrustbundle.token
     backup: backup.pem
     chain:
     - a.pem
     - b.pem
   b:
     url: http://1.2.3.6/spiffetrustbundle.token
-    url: http://spire-server-b.${SPIFFE_TRUST_BUNDLE}/spiffetrustbundle.token
+    url: http://spire-server-b.${SPIFFE_TRUST_DOMAIN}/spiffetrustbundle.token
     backup: backup.pem
     chain:
     - b.pem
