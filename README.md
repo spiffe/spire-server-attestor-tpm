@@ -73,6 +73,17 @@ tpm2_getcap handles-persistent | grep 0x81008006
 ### If you don't have a key, do the following to generate the key pair
 ```
 tpm2_create -G rsa2048:rsassa:null -g sha256 -u key.pub -r key.priv -C 0x81000001
+```
+
+### If that fails then run this instead:
+```
+tpm2_createprimary -C o -g sha256 -G rsa2048 -c primary.ctx
+tpm2_create -G rsa2048:rsassa:null -g sha256 -u key.pub -r key.priv -C primary.ctx
+tpm2_create -G rsa2048:rsassa:null -g sha256 -u key.pub -r key.priv -C 0x81000001
+```
+
+### Then contineu on
+```
 tpm2_load -C 0x81000001 -u key.pub -r key.priv -c key.ctx
 tpm2_evictcontrol -C o -c key.ctx 0x81008006
 ```
